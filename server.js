@@ -246,6 +246,7 @@ app.all('/login', (req, res, next) => {
 })
 
 app.all('/register', (req, res) => {
+	console.log('hihi')
 	new Promise(async (resolve, reject) => {
 		if (Object.keys(req.body).length > 0) {
 			if (
@@ -255,7 +256,9 @@ app.all('/register', (req, res) => {
 				reject('다 채워라잉')
 			}
 			else if (await db.isphoneInUse(req.body.phone)) {
+				console.log("친구, 이미 가입했당")
 				reject('친구, 이미 가입했소')
+
 			}		
 			else {
 				resolve(true)
@@ -266,47 +269,48 @@ app.all('/register', (req, res) => {
 		}
 	})
 		.then(isValidFormData => new Promise((resolve, reject) => {
+		
 			if (Object.keys(req.body).length > 0 && isValidFormData) {
 				db.createUserRecord({
 					phone: req.body.phone,
 					password: req.body.password,
 					name: req.body.username
 				})
-					.then((createdUser) => {
-						// console.log('====> user created...')
-						// console.log(creationSuccessful)
-						// authenticate?
-						resolve(createdUser)
-					})
-					.catch(err => reject(err))
-			}
-			else {
-				resolve(false)
-			}
-		}))
-		.then((createdUserRecord) => {
-			if (createdUserRecord) {
+				
+				.then((createdUser) => {
+				
+					res.redirect('login')
+				
+				})
+				.catch(err => reject(err))
+		}
+		else {
+			resolve(false)
+		}
+	}))
+	.then((createdUserRecord) => {
+		if (createdUserRecord) {
 
-				// Log them in in the session
-				req.login(createdUserRecord, (err) => {
-					console.log(err)
-				})
-				res.render('login')
-			}
-			else {
-				res.render('register', {
-					form: req.body
-				})
-			}
-		})
-		.catch((error) => {
-			// console.log(error)
+			// Log them in in the session
+			req.login(createdUserRecord, (err) => {
+				console.log(err)
+			})
+			res.render('login')
+		}
+		else {
 			res.render('register', {
-
-				error,
 				form: req.body
 			})
+		}
+	})
+	.catch((error) => {
+		// console.log(error)
+		res.render('register', {
+
+			error,
+			form: req.body
 		})
+	})
 })
 
 app.get('/logout', authRequired, (req, res) => {
